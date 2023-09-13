@@ -30,19 +30,19 @@ __device__ __constant__ const uint32_t keccakf_rndc[24] = {
     0x0000800a, 0x8000000a, 0x80008081, 0x00008080, 0x80000001, 0x80008008
 };
 
-__device__ __constant__ const uint32_t evrmore_rndc[15] = {
-        0x00000045, //E
-        0x00000056, //V
-        0x00000052, //R
+__device__ __constant__ const uint32_t meowcoin_rndc[15] = {
         0x0000004D, //M
-        0x0000004F, //O
-        0x00000052, //R
         0x00000045, //E
-        0x0000002D, //-
-        0x00000050, //P
-        0x00000052, //R
         0x0000004F, //O
-        0x00000047, //G
+        0x00000057, //W
+        0x00000043, //C
+        0x0000004F, //O
+        0x00000049, //I
+        0x0000004E, //N
+        0x0000004D, //M
+        0x00000045, //E
+        0x0000004F, //O
+        0x00000057, //W
         0x00000050, //P
         0x0000004F, //O
         0x00000057, //W
@@ -164,12 +164,12 @@ __device__ __forceinline__ void fill_mix(uint32_t* hash_seed, uint32_t lane_id, 
     st.jsr = fnv1a(fnv_hash, lane_id);
     st.jcong = fnv1a(fnv_hash, lane_id);
     #pragma unroll
-    for (int i = 0; i < PROGPOW_REGS; i++)
+    for (int i = 0; i < PROGPOWPRIME_REGS; i++)
         mix[i] = kiss99(st);
 }
 
 __global__ void 
-progpow_search(
+progpowprime_search(
     uint64_t start_nonce,
     const hash32_t header,
     const uint64_t target,
@@ -178,17 +178,17 @@ progpow_search(
     bool hack_false
     )
 {
-    __shared__ uint32_t c_dag[PROGPOW_CACHE_WORDS];
+    __shared__ uint32_t c_dag[PROGPOWPRIME_CACHE_WORDS];
     uint32_t const gid = blockIdx.x * blockDim.x + threadIdx.x;
     uint64_t const nonce = start_nonce + gid;
 
-    const uint32_t lane_id = threadIdx.x & (PROGPOW_LANES - 1);
+    const uint32_t lane_id = threadIdx.x & (PROGPOWPRIME_LANES - 1);
 
     // Load the first portion of the DAG into the shared cache
-    for (uint32_t word = threadIdx.x*PROGPOW_DAG_LOADS; word < PROGPOW_CACHE_WORDS; word += blockDim.x*PROGPOW_DAG_LOADS)
+    for (uint32_t word = threadIdx.x*PROGPOWPRIME_DAG_LOADS; word < PROGPOWPRIME_CACHE_WORDS; word += blockDim.x*PROGPOWPRIME_DAG_LOADS)
     {
-        dag_t load = g_dag[word/PROGPOW_DAG_LOADS];
-        for(int i=0; i<PROGPOW_DAG_LOADS; i++)
+        dag_t load = g_dag[word/PROGPOWPRIME_DAG_LOADS];
+        for(int i=0; i<PROGPOWPRIME_DAG_LOADS; i++)
             c_dag[word + i] =  load.s[i];
     }
 
@@ -215,9 +215,9 @@ progpow_search(
         state[9] = nonce >> 32;
 //        state[10] = 0x00000001;
 //       state[18] = 0x80008081;
-        // 3rd apply evrmore input constraints
+        // 3rd apply meowcoin input constraints
         for (int i = 10; i < 25; i++)
-            state[i] = evrmore_rndc[i-10];
+            state[i] = meowcoin_rndc[i-10];
 
         // Run intial keccak round
         keccak_f800(state);
@@ -229,25 +229,25 @@ progpow_search(
 
 
     #pragma unroll 1
-    for (uint32_t h = 0; h < PROGPOW_LANES; h++)
+    for (uint32_t h = 0; h < PROGPOWPRIME_LANES; h++)
     {
-        uint32_t mix[PROGPOW_REGS];
+        uint32_t mix[PROGPOWPRIME_REGS];
 
-        hash_seed[0] = __shfl_sync(0xFFFFFFFF, state2[0], h, PROGPOW_LANES);
-        hash_seed[1] = __shfl_sync(0xFFFFFFFF, state2[1], h, PROGPOW_LANES);
+        hash_seed[0] = __shfl_sync(0xFFFFFFFF, state2[0], h, PROGPOWPRIME_LANES);
+        hash_seed[1] = __shfl_sync(0xFFFFFFFF, state2[1], h, PROGPOWPRIME_LANES);
 
         // initialize mix for all lanes
         fill_mix(hash_seed, lane_id, mix);
 
         #pragma unroll 1
-        for (uint32_t l = 0; l < PROGPOW_CNT_DAG; l++)
-            progPowLoop(l, mix, g_dag, c_dag, hack_false);
+        for (uint32_t l = 0; l < PROGPOWPRIME_CNT_DAG; l++)
+            progpowprimeLoop(l, mix, g_dag, c_dag, hack_false);
 
 
         // Reduce mix data to a per-lane 32-bit digest
         uint32_t digest_lane = FNV_OFFSET_BASIS;
         #pragma unroll
-        for (int i = 0; i < PROGPOW_REGS; i++)
+        for (int i = 0; i < PROGPOWPRIME_REGS; i++)
             fnv1a(digest_lane, mix[i]);
 
         // Reduce all lanes to a single 256-bit digest
@@ -256,10 +256,10 @@ progpow_search(
         for (int i = 0; i < 8; i++)
             digest_temp.uint32s[i] = FNV_OFFSET_BASIS;
 
-        for (int i = 0; i < PROGPOW_LANES; i += 8)
+        for (int i = 0; i < PROGPOWPRIME_LANES; i += 8)
             #pragma unroll
             for (int j = 0; j < 8; j++)
-                fnv1a(digest_temp.uint32s[j], SHFL(digest_lane, i + j, PROGPOW_LANES));
+                fnv1a(digest_temp.uint32s[j], SHFL(digest_lane, i + j, PROGPOWPRIME_LANES));
 
         if (h == lane_id)
             digest = digest_temp;
@@ -281,9 +281,9 @@ progpow_search(
 
 //        state[17] = 0x00000001;
 //        state[24] = 0x80008081;
-        // 3rd apply evrmore input constraints
+        // 3rd apply meowcoin input constraints
         for (int i = 16; i < 25; i++)
-            state[i] = evrmore_rndc[i - 16];
+            state[i] = meowcoin_rndc[i - 16];
 
         // Run keccak loop
         keccak_f800(state);

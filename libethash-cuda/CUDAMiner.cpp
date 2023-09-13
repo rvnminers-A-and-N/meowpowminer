@@ -21,8 +21,8 @@ along with ethminer.  If not, see <http://www.gnu.org/licenses/>.
 #include <nvrtc.h>
 
 #include <libethcore/Farm.h>
-#include <libcrypto/ethash.hpp>
-#include <libcrypto/progpow.hpp>
+#include <libcrypto/ethashprime.hpp>
+#include <libcrypto/progpowprime.hpp>
 
 #include "CUDAMiner.h"
 #include "CUDAMiner_kernel.h"
@@ -157,9 +157,9 @@ bool CUDAMiner::initEpoch_internal()
             m_epochContext->light_cache_size, cudaMemcpyHostToDevice));
 
         set_constants(m_device_dag, m_epochContext->light_cache_num_items, m_device_light,
-            m_epochContext->light_cache_num_items);  // in ethash_cuda_miner_kernel.cu
+            m_epochContext->light_cache_num_items);  // in ethashprime_cuda_miner_kernel.cu
 
-        ethash_generate_dag(m_device_dag, m_epochContext->full_dataset_size, m_device_light,
+        ethashprime_generate_dag(m_device_dag, m_epochContext->full_dataset_size, m_device_light,
             m_epochContext->light_cache_num_items, m_settings.gridSize, m_settings.blockSize, m_streams[0],
             m_deviceDescriptor.cuDeviceIndex);
 
@@ -231,10 +231,10 @@ void CUDAMiner::workLoop()
                     continue;
                 }
             }
-            uint64_t period_seed = w.block.value() / progpow::kPeriodLength;
-            if (m_nextProgpowPeriod == 0)
+            uint64_t period_seed = w.block.value() / progpowprime::kPeriodLength;
+            if (m_nextProgpowprimePeriod == 0)
             {
-                m_nextProgpowPeriod = period_seed;
+                m_nextProgpowprimePeriod = period_seed;
                 if (m_compileThread)
                 {
                     m_compileThread->join();
@@ -247,7 +247,7 @@ void CUDAMiner::workLoop()
                     }
                     catch (const std::exception& ex)
                     {
-                        cudalog << "Failed to compile ProgPoW kernel : " << ex.what();
+                        cudalog << "Failed to compile Progpowprime kernel : " << ex.what();
                     }
                 }));
             }
@@ -260,10 +260,10 @@ void CUDAMiner::workLoop()
                 }
 
                 // sanity check the next kernel
-                if (period_seed != m_nextProgpowPeriod)
+                if (period_seed != m_nextProgpowprimePeriod)
                 {
                     // This shouldn't happen!!! Try to recover
-                    m_nextProgpowPeriod = period_seed;
+                    m_nextProgpowprimePeriod = period_seed;
                     m_compileThread.reset(new std::thread([&] {
                         try
                         {
@@ -271,15 +271,15 @@ void CUDAMiner::workLoop()
                         }
                         catch (const std::exception& ex)
                         {
-                            cudalog << "Failed to compile ProgPoW kernel : " << ex.what();
+                            cudalog << "Failed to compile Progpowprime kernel : " << ex.what();
                         }
                     }));
                     m_compileThread->join();
                 }
                 old_period_seed = period_seed;
                 m_kernelExecIx ^= 1;
-                cudalog << "Launching period " << period_seed << " ProgPow kernel";
-                m_nextProgpowPeriod = period_seed + 1;
+                cudalog << "Launching period " << period_seed << " Progpowprime kernel";
+                m_nextProgpowprimePeriod = period_seed + 1;
                 m_compileThread.reset(new std::thread([&] {
                     try
                     {
@@ -287,7 +287,7 @@ void CUDAMiner::workLoop()
                     }
                     catch (const std::exception& ex)
                     {
-                        cudalog << "Failed to compile ProgPoW kernel : " << ex.what();
+                        cudalog << "Failed to compile Progpowprime kernel : " << ex.what();
                     }
                 }));
             }
@@ -396,7 +396,7 @@ void CUDAMiner::asyncCompile()
 
     cuCtxSetCurrent(m_context);
 
-    compileKernel(m_nextProgpowPeriod, m_epochContext->full_dataset_num_items / 2, m_kernel[m_kernelCompIx]);
+    compileKernel(m_nextProgpowprimePeriod, m_epochContext->full_dataset_num_items / 2, m_kernel[m_kernelCompIx]);
 
     setThreadName(saveName.c_str());
 
@@ -405,9 +405,9 @@ void CUDAMiner::asyncCompile()
 
 void CUDAMiner::compileKernel(uint64_t period_seed, uint64_t dag_elms, CUfunction& kernel)
 {
-    const char* name = "progpow_search";
+    const char* name = "progpowprime_search";
 
-    std::string text = progpow::getKern(period_seed, progpow::kernel_type::Cuda);
+    std::string text = progpowprime::getKern(period_seed, progpowprime::kernel_type::Cuda);
     text += std::string(CUDAMiner_kernel);
 
     std::string tmpDir;
@@ -438,7 +438,7 @@ void CUDAMiner::compileKernel(uint64_t period_seed, uint64_t dag_elms, CUfunctio
     NVRTC_SAFE_CALL(nvrtcAddNameExpression(prog, name));
     std::string op_arch = "--gpu-architecture=compute_" + to_string(m_deviceDescriptor.cuComputeMajor) +
                           to_string(m_deviceDescriptor.cuComputeMinor);
-    std::string op_dag = "-DPROGPOW_DAG_ELEMENTS=" + to_string(dag_elms);
+    std::string op_dag = "-DPROGPOWPRIME_DAG_ELEMENTS=" + to_string(dag_elms);
 
     const char* opts[] = {op_arch.c_str(), op_dag.c_str(), "-lineinfo"};
     nvrtcResult compileResult = nvrtcCompileProgram(prog,  // prog
@@ -494,7 +494,7 @@ void CUDAMiner::compileKernel(uint64_t period_seed, uint64_t dag_elms, CUfunctio
     // Destroy the program.
     NVRTC_SAFE_CALL(nvrtcDestroyProgram(&prog));
 
-    cudalog << "Pre-compiled period " << period_seed << " CUDA ProgPow kernel for arch "
+    cudalog << "Pre-compiled period " << period_seed << " CUDA Progpowprime kernel for arch "
             << to_string(m_deviceDescriptor.cuComputeMajor) << '.' << to_string(m_deviceDescriptor.cuComputeMinor);
 }
 

@@ -3,7 +3,7 @@
 #include <chrono>
 
 #include <boost/beast/core/detail/base64.hpp>
-#include <libcrypto/ethash.hpp>
+#include <libcrypto/ethashprime.hpp>
 
 using namespace std;
 using namespace dev;
@@ -447,12 +447,12 @@ void EthGetworkClient::processResponse(Json::Value& JRes)
 
                     newWp.header = h256(JPrm["pprpcheader"].asString());
                     newWp.epoch = strtoul(JPrm["pprpcepoch"].asString().c_str(), nullptr, 0);
-                    auto seed = ethash::calculate_seed_from_epoch(newWp.epoch.value());
+                    auto seed = ethashprime::calculate_seed_from_epoch(newWp.epoch.value());
                     newWp.seed = h256(seed.bytes, dev::h256::ConstructFromPointer);
 
                     // Compute block boundary from bits
                     uint32_t bits = std::strtoul(JPrm["bits"].asString().c_str(), nullptr, 16);
-                    auto block_target = ethash::from_compact(bits);
+                    auto block_target = ethashprime::from_compact(bits);
                     newWp.block_boundary = h256(block_target.bytes, dev::h256::ConstructFromPointer);
 
                     newWp.boundary = h256(JPrm["target"].asString());
@@ -586,7 +586,7 @@ void EthGetworkClient::submitSolution(const Solution& solution)
         m_solution_submitted_max_id = max(m_solution_submitted_max_id, id);
         jReq["method"] = "pprpcsb";
         jReq["params"] = Json::Value(Json::arrayValue);
-        jReq["params"].append(solution.work.header.hex());  // Don't prepend 0x (evrprogpow has a dictionary of hashes)
+        jReq["params"].append(solution.work.header.hex());  // Don't prepend 0x (meowpow has a dictionary of hashes)
         jReq["params"].append(solution.mixHash.hex());
         jReq["params"].append(nonceHex);
         send(jReq);

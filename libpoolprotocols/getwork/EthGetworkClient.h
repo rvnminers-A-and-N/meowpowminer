@@ -70,5 +70,5 @@ private:
 
     unsigned m_solution_submitted_max_id;  // maximum json id we used to send a solution
 
-    std::string m_base64_auth{};  // Used by evrprogpow for http authentication;
+    std::string m_base64_auth{};  // Used by meowpow for http authentication;
 };

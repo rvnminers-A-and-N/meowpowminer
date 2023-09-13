@@ -1,4 +1,4 @@
-// ethash: C/C++ implementation of Ethash, the Ethereum Proof of Work algorithm.
+// ethashprime: C/C++ implementation of Ethashprime, the Ethereum Proof of Work algorithm.
 // Copyright 2018-2019 Pawel Bylica.
 // Licensed under the Apache License, Version 2.0.
 
@@ -9,7 +9,7 @@
 #include "bitwise.hpp"
 #include <string_view>
 
-namespace ethash
+namespace ethashprime
 {
 /// Loads 64-bit integer from given memory location as little-endian number.
 static inline ALWAYS_INLINE uint64_t load_le(const uint8_t* data)
@@ -617,4 +617,4 @@ hash512 keccak512(const hash512& input)
     return keccak512(input.bytes, sizeof(input));
 }
 
-}  // namespace ethash
+}  // namespace ethashprime

@@ -30,7 +30,7 @@ along with ethminer.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 #include <libethcore/Farm.h>
-#include <libcrypto/progpow.hpp>
+#include <libcrypto/progpowprime.hpp>
 
 #include <boost/version.hpp>
 
@@ -216,7 +216,7 @@ bool CPUMiner::initEpoch_internal()
    Miner should stop working on the current block
    This happens if a
      * new work arrived                       or
-     * miner should stop (eg exit evrprogpowminer)   or
+     * miner should stop (eg exit meowpowminer)   or
      * miner should pause
 */
 void CPUMiner::kick_miner()
@@ -231,12 +231,12 @@ void CPUMiner::search(const dev::eth::WorkPackage& w)
     DEV_BUILD_LOG_PROGRAMFLOW(cpulog, "cp-" << m_index << " CPUMiner::search() begin");
     constexpr size_t blocksize = 64;
 
-    const auto context{ethash::get_epoch_context(w.epoch.value(), true)};
+    const auto context{ethashprime::get_epoch_context(w.epoch.value(), true)};
     DEV_BUILD_LOG_PROGRAMFLOW(cpulog, "cp-" << m_index << " CPUMiner::search() context loaded");
 
-    auto header{ethash::from_bytes(w.header.data())};
-    auto boundary{ethash::from_bytes(w.get_boundary().data())};
-    auto period{w.block.value() / progpow::kPeriodLength};
+    auto header{ethashprime::from_bytes(w.header.data())};
+    auto boundary{ethashprime::from_bytes(w.get_boundary().data())};
+    auto period{w.block.value() / progpowprime::kPeriodLength};
     auto nonce{w.startNonce};
     bool found{false};
 
@@ -246,8 +246,8 @@ void CPUMiner::search(const dev::eth::WorkPackage& w)
         // Do the search
         for (size_t i{0}; i < blocksize; i++, nonce++)
         {
-            auto result{progpow::hash(*context, period, header, nonce)};
-            if (ethash::is_less_or_equal(result.final_hash, boundary))
+            auto result{progpowprime::hash(*context, period, header, nonce)};
+            if (ethashprime::is_less_or_equal(result.final_hash, boundary))
             {
                 h256 mix{reinterpret_cast<::byte*>(result.mix_hash.bytes), h256::ConstructFromPointer};
                 h256 fin{reinterpret_cast<::byte*>(result.final_hash.bytes), h256::ConstructFromPointer};
@@ -300,7 +300,7 @@ void CPUMiner::workLoop()
             continue;
         }
 
-        if (w.algo == "progpow")
+        if (w.algo == "progpowprime")
         {
             //// Epoch change ?
             // if (current.epoch != w.epoch)
@@ -353,7 +353,7 @@ void CPUMiner::enumDevices(std::map<string, DeviceDescriptor>& _DevicesCollectio
 
         s.str("");
         s.clear();
-        s << "ethash::eval()/boost " << (BOOST_VERSION / 100000) << "." << (BOOST_VERSION / 100 % 1000) << "."
+        s << "ethashprime::eval()/boost " << (BOOST_VERSION / 100000) << "." << (BOOST_VERSION / 100 % 1000) << "."
           << (BOOST_VERSION % 100);
         deviceDescriptor.name = s.str();
         deviceDescriptor.uniqueId = uniqueId;

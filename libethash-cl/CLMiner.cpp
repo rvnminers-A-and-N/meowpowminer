@@ -8,8 +8,8 @@
 #include "CLMiner.h"
 #include "CLMiner_kernel.h"
 #include <libethcore/Farm.h>
-#include <libcrypto/ethash.hpp>
-#include <libcrypto/progpow.hpp>
+#include <libcrypto/ethashprime.hpp>
+#include <libcrypto/progpowprime.hpp>
 
 #include "CLMiner.h"
 #include <fstream>
@@ -268,7 +268,7 @@ CLMiner::~CLMiner()
 }
 
 // NOTE: The following struct must match the one defined in
-// ethash.cl
+// ethashprime.cl
 struct SearchResults
 {
     struct
@@ -338,10 +338,10 @@ void CLMiner::workLoop()
 
             if (current.header != next.header)
             {
-                uint64_t period_seed = next.block.value() / progpow::kPeriodLength;
-                if (m_nextProgpowPeriod == 0)
+                uint64_t period_seed = next.block.value() / progpowprime::kPeriodLength;
+                if (m_nextProgpowprimePeriod == 0)
                 {
-                    m_nextProgpowPeriod = period_seed;
+                    m_nextProgpowprimePeriod = period_seed;
                     if (m_compileThread)
                     {
                         m_compileThread->join();
@@ -353,7 +353,7 @@ void CLMiner::workLoop()
                         }
                         catch (const std::exception& ex)
                         {
-                            cllog << "Failed to compile ProgPoW kernel : " << ex.what();
+                            cllog << "Failed to compile Progpowprime kernel : " << ex.what();
                         }
                     }));
                 }
@@ -366,10 +366,10 @@ void CLMiner::workLoop()
                     }
 
                     // sanity check the next kernel
-                    if (period_seed != m_nextProgpowPeriod)
+                    if (period_seed != m_nextProgpowprimePeriod)
                     {
                         // This shouldn't happen!!! Try to recover
-                        m_nextProgpowPeriod = period_seed;
+                        m_nextProgpowprimePeriod = period_seed;
                         m_compileThread.reset(new std::thread([&] {
                             try
                             {
@@ -377,7 +377,7 @@ void CLMiner::workLoop()
                             }
                             catch (const std::exception& ex)
                             {
-                                cllog << "Failed to compile ProgPoW kernel : " << ex.what();
+                                cllog << "Failed to compile Progpowprime kernel : " << ex.what();
                             }
                         }));
                         m_compileThread->join();
@@ -386,8 +386,8 @@ void CLMiner::workLoop()
                     m_program = m_nextProgram;
                     m_searchKernel = m_nextSearchKernel;
                     old_period_seed = period_seed;
-                    m_nextProgpowPeriod = period_seed + 1;
-                    cllog << "Loaded period " << period_seed << " progpow kernel";
+                    m_nextProgpowprimePeriod = period_seed + 1;
+                    cllog << "Loaded period " << period_seed << " progpowprime kernel";
                     m_compileThread.reset(new std::thread([&] {
                         try
                         {
@@ -395,7 +395,7 @@ void CLMiner::workLoop()
                         }
                         catch (const std::exception& ex)
                         {
-                            cllog << "Failed to compile ProgPoW kernel : " << ex.what();
+                            cllog << "Failed to compile Progpowprime kernel : " << ex.what();
                         }
                     }));
                     continue;
@@ -771,7 +771,7 @@ bool CLMiner::initEpoch_internal()
             m_dag = new cl::Buffer(m_context, CL_MEM_READ_ONLY, m_epochContext->full_dataset_size);
             cllog << "Loading kernels";
 
-            m_dagKernel = cl::Kernel(m_program, "ethash_calculate_dag_item");
+            m_dagKernel = cl::Kernel(m_program, "ethashprime_calculate_dag_item");
 
             cllog << "Writing light cache buffer";
             m_queue.enqueueWriteBuffer(
@@ -831,21 +831,21 @@ void CLMiner::asyncCompile()
     if (!dropThreadPriority())
         cllog << "Unable to lower compiler priority.";
 
-    compileKernel(m_nextProgpowPeriod, m_nextProgram, m_nextSearchKernel);
+    compileKernel(m_nextProgpowprimePeriod, m_nextProgram, m_nextSearchKernel);
 
     setThreadName(saveName.c_str());
 }
 
 void CLMiner::compileKernel(uint64_t period_seed, cl::Program& program, cl::Kernel& searchKernel)
 {
-    std::string code = progpow::getKern(period_seed, progpow::kernel_type::OpenCL);
+    std::string code = progpowprime::getKern(period_seed, progpowprime::kernel_type::OpenCL);
     code += std::string(CLMiner_kernel);
 
     addDefinition(code, "GROUP_SIZE", m_settings.localWorkSize);
     addDefinition(code, "ACCESSES", 64);
     addDefinition(code, "LIGHT_WORDS", m_epochContext->light_cache_num_items);
-    addDefinition(code, "PROGPOW_DAG_BYTES", m_epochContext->full_dataset_size);
-    addDefinition(code, "PROGPOW_DAG_ELEMENTS", m_epochContext->full_dataset_num_items / 2);
+    addDefinition(code, "PROGPOWPRIME_DAG_BYTES", m_epochContext->full_dataset_size);
+    addDefinition(code, "PROGPOWPRIME_DAG_ELEMENTS", m_epochContext->full_dataset_num_items / 2);
 
     addDefinition(code, "MAX_OUTPUTS", c_maxSearchResults);
     int platform = 0;
@@ -902,10 +902,10 @@ void CLMiner::compileKernel(uint64_t period_seed, cl::Program& program, cl::Kern
         pause(MinerPauseEnum::PauseDueToInitEpochError);
         return;
     }
-    searchKernel = cl::Kernel(program, "ethash_search");
+    searchKernel = cl::Kernel(program, "ethashprime_search");
 
     searchKernel.setArg(1, m_header);
     searchKernel.setArg(5, 0);
 
-    cllog << "Pre-compiled period " << period_seed << " OpenCL ProgPow kernel";
+    cllog << "Pre-compiled period " << period_seed << " OpenCL Progpowprime kernel";
 }

@@ -27,7 +27,7 @@
 #include <optional>
 #include <string>
 
-//#include "EthashAux.h"
+//#include "EthashprimeAux.h"
 #include <libdevcore/Common.h>
 #include <libdevcore/Log.h>
 #include <libdevcore/Worker.h>
@@ -35,7 +35,7 @@
 #include <boost/asio.hpp>
 #include <boost/format.hpp>
 
-#include <libcrypto/ethash.hpp>
+#include <libcrypto/ethashprime.hpp>
 
 #define DAG_LOAD_MODE_PARALLEL 0
 #define DAG_LOAD_MODE_SEQUENTIAL 1
@@ -340,7 +340,7 @@ struct WorkPackage
     uint64_t startNonce = 0;
     uint16_t exSizeBytes = 0;
 
-    std::string algo = "progpow";
+    std::string algo = "progpowprime";
 };
 
 
@@ -416,7 +416,7 @@ public:
     /**
      * @brief Assigns Epoch context to this instance
      */
-    void setEpoch(std::shared_ptr<ethash::epoch_context> const& _ec) { m_epochContext = _ec; }
+    void setEpoch(std::shared_ptr<ethashprime::epoch_context> const& _ec) { m_epochContext = _ec; }
 
     unsigned Index() { return m_index; };
 
@@ -495,7 +495,7 @@ protected:
     const unsigned m_index = 0;           // Ordinal index of the Instance (not the device)
     DeviceDescriptor m_deviceDescriptor;  // Info about the device
 
-    std::shared_ptr<ethash::epoch_context> m_epochContext;
+    std::shared_ptr<ethashprime::epoch_context> m_epochContext;
 
 #ifdef DEV_BUILD
     std::chrono::steady_clock::time_point m_workSwitchStart;
@@ -506,7 +506,7 @@ protected:
     mutable std::mutex x_pause;
     std::condition_variable m_new_work_signal;
     std::condition_variable m_dag_loaded_signal;
-    uint64_t m_nextProgpowPeriod = 0;
+    uint64_t m_nextProgpowprimePeriod = 0;
     std::unique_ptr<std::thread> m_compileThread = nullptr;
 
 private:

@@ -6,10 +6,10 @@
 
 #include "CUDAMiner_cuda.h"
 #include "cuda_helper.h"
-#define ETHASH_HASH_BYTES 64
-#define ETHASH_DATASET_PARENTS 512
+#define ETHASHPRIME_HASH_BYTES 64
+#define ETHASHPRIME_DATASET_PARENTS 512
 
-#include "progpow_cuda_miner_kernel_globals.h"
+#include "progpowprime_cuda_miner_kernel_globals.h"
 
 // Implementation based on:
 // https://github.com/mjosaarinen/tiny_sha3/blob/master/sha3.c
@@ -95,10 +95,10 @@ __device__ uint4 fnv4(uint4 a, uint4 b)
 	return c;
 }
 
-#define NODE_WORDS (ETHASH_HASH_BYTES/sizeof(uint32_t))
+#define NODE_WORDS (ETHASHPRIME_HASH_BYTES/sizeof(uint32_t))
 
 __global__ void
-ethash_calculate_dag_item(uint32_t start, hash64_t *g_dag, uint64_t dag_bytes, hash64_t* g_light, uint32_t light_words)
+ethashprime_calculate_dag_item(uint32_t start, hash64_t *g_dag, uint64_t dag_bytes, hash64_t* g_light, uint32_t light_words)
 {
 	uint64_t const node_index = start + uint64_t(blockIdx.x) * blockDim.x + threadIdx.x;
 	uint64_t num_nodes = dag_bytes / sizeof(hash64_t);
@@ -114,7 +114,7 @@ ethash_calculate_dag_item(uint32_t start, hash64_t *g_dag, uint64_t dag_bytes, h
 	const int thread_id = threadIdx.x & 3;
 
 	#pragma unroll
-	for (uint32_t i = 0; i < ETHASH_DATASET_PARENTS; ++i) {
+	for (uint32_t i = 0; i < ETHASHPRIME_DATASET_PARENTS; ++i) {
 		uint32_t parent_index = fnv(node_index ^ i, dag_node.words[i % NODE_WORDS]) % light_words;
 		for (uint32_t t = 0; t < 4; t++) {
 
@@ -151,7 +151,7 @@ ethash_calculate_dag_item(uint32_t start, hash64_t *g_dag, uint64_t dag_bytes, h
 	}
 }
 
-void ethash_generate_dag(
+void ethashprime_generate_dag(
 	hash64_t* dag,
 	uint64_t dag_bytes,
 	hash64_t * light,
@@ -169,7 +169,7 @@ void ethash_generate_dag(
 	if (restWork > 0) fullRuns++;
 	for (uint32_t i = 0; i < fullRuns; i++)
 	{
-		ethash_calculate_dag_item <<<blocks, threads, 0, stream >>>(i * blocks * threads, dag, dag_bytes, light, light_words);
+		ethashprime_calculate_dag_item <<<blocks, threads, 0, stream >>>(i * blocks * threads, dag, dag_bytes, light, light_words);
 		CUDA_SAFE_CALL(cudaDeviceSynchronize());
 	}
 	CUDA_SAFE_CALL(cudaGetLastError());

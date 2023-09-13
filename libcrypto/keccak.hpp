@@ -1,4 +1,4 @@
-// ethash: C/C++ implementation of Ethash, the Ethereum Proof of Work algorithm.
+// ethashprime: C/C++ implementation of Ethashprime, the Ethereum Proof of Work algorithm.
 // Copyright 2018-2019 Pawel Bylica.
 // Licensed under the Apache License, Version 2.0.
 
@@ -16,7 +16,7 @@
 #define __builtin_memcpy memcpy
 #endif
 
-namespace ethash
+namespace ethashprime
 {
 
 void keccakf1600(uint64_t state[25]);
@@ -27,6 +27,6 @@ hash256 keccak256(const uint8_t* input, size_t input_size);
 hash512 keccak512(const hash512& input);
 hash512 keccak512(const uint8_t* input, size_t input_size);
 
-}  // namespace ethash
+}  // namespace ethashprime
 
 #endif  // !CRYPTO_KECCAK_HPP_

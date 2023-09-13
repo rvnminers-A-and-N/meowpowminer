@@ -1,6 +1,6 @@
-#include "ethash_cuda_miner_kernel.h"
+#include "ethashprime_cuda_miner_kernel.h"
 
-#include "ethash_cuda_miner_kernel_globals.h"
+#include "ethashprime_cuda_miner_kernel_globals.h"
 
 #include "cuda_helper.h"
 
@@ -17,7 +17,7 @@
 #include "dagger_shuffled.cuh"
 
 template <uint32_t _PARALLEL_HASH>
-__global__ void ethash_search(volatile Search_results* g_output, uint64_t start_nonce)
+__global__ void ethashprime_search(volatile Search_results* g_output, uint64_t start_nonce)
 {
     uint32_t const gid = blockIdx.x * blockDim.x + threadIdx.x;
     uint2 mix[4];
@@ -37,35 +37,35 @@ __global__ void ethash_search(volatile Search_results* g_output, uint64_t start_
     g_output->result[index].mix[7] = mix[3].y;
 }
 
-void run_ethash_search(uint32_t gridSize, uint32_t blockSize, cudaStream_t stream,
+void run_ethashprime_search(uint32_t gridSize, uint32_t blockSize, cudaStream_t stream,
     volatile Search_results* g_output, uint64_t start_nonce, uint32_t parallelHash)
 {
     switch (parallelHash)
     {
     case 1:
-        ethash_search<1><<<gridSize, blockSize, 0, stream>>>(g_output, start_nonce);
+        ethashprime_search<1><<<gridSize, blockSize, 0, stream>>>(g_output, start_nonce);
         break;
     case 2:
-        ethash_search<2><<<gridSize, blockSize, 0, stream>>>(g_output, start_nonce);
+        ethashprime_search<2><<<gridSize, blockSize, 0, stream>>>(g_output, start_nonce);
         break;
     case 4:
-        ethash_search<4><<<gridSize, blockSize, 0, stream>>>(g_output, start_nonce);
+        ethashprime_search<4><<<gridSize, blockSize, 0, stream>>>(g_output, start_nonce);
         break;
     case 8:
-        ethash_search<8><<<gridSize, blockSize, 0, stream>>>(g_output, start_nonce);
+        ethashprime_search<8><<<gridSize, blockSize, 0, stream>>>(g_output, start_nonce);
         break;
     default:
-        ethash_search<4><<<gridSize, blockSize, 0, stream>>>(g_output, start_nonce);
+        ethashprime_search<4><<<gridSize, blockSize, 0, stream>>>(g_output, start_nonce);
         break;
     }
     CUDA_SAFE_CALL(cudaGetLastError());
 }
 
-#define ETHASH_DATASET_PARENTS 512
+#define ETHASHPRIME_DATASET_PARENTS 512
 #define NODE_WORDS (64 / 4)
 
 
-__global__ void ethash_calculate_dag_item(uint32_t start)
+__global__ void ethashprime_calculate_dag_item(uint32_t start)
 {
     uint32_t const node_index = start + blockIdx.x * blockDim.x + threadIdx.x;
     if (((node_index >> 1) & (~1)) >= d_dag_size)
@@ -80,7 +80,7 @@ __global__ void ethash_calculate_dag_item(uint32_t start)
 
     const int thread_id = threadIdx.x & 3;
 
-    for (uint32_t i = 0; i != ETHASH_DATASET_PARENTS; ++i)
+    for (uint32_t i = 0; i != ETHASHPRIME_DATASET_PARENTS; ++i)
     {
         uint32_t parent_index = fnv(node_index ^ i, dag_node.words[i % NODE_WORDS]) % d_light_size;
         for (uint32_t t = 0; t < 4; t++)
@@ -117,7 +117,7 @@ __global__ void ethash_calculate_dag_item(uint32_t start)
     }
 }
 
-void ethash_generate_dag(
+void ethashprime_generate_dag(
     uint64_t dag_size, uint32_t gridSize, uint32_t blockSize, cudaStream_t stream)
 {
     const uint32_t work = (uint32_t)(dag_size / sizeof(hash64_t));
@@ -126,14 +126,14 @@ void ethash_generate_dag(
     uint32_t base;
     for (base = 0; base <= work - run; base += run)
     {
-        ethash_calculate_dag_item<<<gridSize, blockSize, 0, stream>>>(base);
+        ethashprime_calculate_dag_item<<<gridSize, blockSize, 0, stream>>>(base);
         CUDA_SAFE_CALL(cudaDeviceSynchronize());
     }
     if (base < work)
     {
         uint32_t lastGrid = work - base;
         lastGrid = (lastGrid + blockSize - 1) / blockSize;
-        ethash_calculate_dag_item<<<lastGrid, blockSize, 0, stream>>>(base);
+        ethashprime_calculate_dag_item<<<lastGrid, blockSize, 0, stream>>>(base);
         CUDA_SAFE_CALL(cudaDeviceSynchronize());
     }
     CUDA_SAFE_CALL(cudaGetLastError());

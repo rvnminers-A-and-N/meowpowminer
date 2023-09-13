@@ -1,12 +1,12 @@
-// ethash: C/C++ implementation of Ethash, the Ethereum Proof of Work algorithm.
+// ethashprime: C/C++ implementation of Ethashprime, the Ethereum Proof of Work algorithm.
 // Copyright 2018-2019 Pawel Bylica.
 // Licensed under the Apache License, Version 2.0.
 
 // Modified by Firominer's authors 2021
 
 #pragma once
-#ifndef CRYPTO_ETHASH_HPP_
-#define CRYPTO_ETHASH_HPP_
+#ifndef CRYPTO_ETHASHPRIME_HPP_
+#define CRYPTO_ETHASHPRIME_HPP_
 
 #include <memory>
 #include <optional>
@@ -16,7 +16,7 @@
 #include "attributes.hpp"
 #include "keccak.hpp"
 
-namespace ethash
+namespace ethashprime
 {
 // Internal constants:
 constexpr static uint32_t kRevision = 23;
@@ -26,24 +26,24 @@ constexpr static uint32_t kRevision = 23;
  * to roughly 108 hours i.e. 4.5 days. To achieve the same DAG growth rate with
  * a block time of 5 min we need to set epoch length to 30000/(300/13) which
  * provides a DAG increase every 1300 blocks i.e. 4.51 days
- * See "./lib/ethash/ethash.cpp" for increase size(s)
+ * See "./lib/ethashprime/ethashprime.cpp" for increase size(s)
  */
 
-constexpr static uint32_t kEpoch_length = 12000;  // Evrmore
+constexpr static uint32_t kEpoch_length = 15000;  // Meowcoin
 //constexpr static uint32_t kEpoch_length = 1300;  // Firo
 
 constexpr static uint32_t kLight_cache_item_size = 64;
 constexpr static uint32_t kFull_dataset_item_size = 128;
-constexpr static uint32_t kNum_dataset_accesses = 64;
-constexpr static uint32_t kLight_cache_init_size = 1 << 24;
-constexpr static uint32_t kLight_cache_growth = 1 << 17;
-constexpr static uint32_t kLight_cache_rounds = 3;
-constexpr static uint32_t kL1_cache_size = 16384u;
+constexpr static uint32_t kNum_dataset_accesses = 32;
+constexpr static uint32_t kLight_cache_init_size = 1 << 12;
+constexpr static uint32_t kLight_cache_growth = 1 << 8;
+constexpr static uint32_t kLight_cache_rounds = 2;
+constexpr static uint32_t kL1_cache_size = 8192u;
 constexpr static uint32_t kL1_cache_words = kL1_cache_size / sizeof(uint32_t);
 //constexpr static uint32_t kFull_dataset_init_size = (1 << 30) + (1 << 29); // Firo initial DAG size such as at block 400K they're above 4GB
-constexpr static uint32_t kFull_dataset_init_size = (1U << 30)*3; // Evrmore
-constexpr static uint32_t kFull_dataset_growth = 1 << 23;
-constexpr static uint32_t kFull_dataset_item_parents = 512;
+constexpr static uint32_t kFull_dataset_init_size = (1U << 30)*5; // Meowcoin
+constexpr static uint32_t kFull_dataset_growth = 1 << 11;
+constexpr static uint32_t kFull_dataset_item_parents = 256;
 
 struct epoch_context
 {
@@ -107,7 +107,7 @@ uint32_t find_largest_unsigned_prime(uint32_t upper_bound) noexcept;
  * Calculates the number of items in the light cache for given epoch.
  *
  * This function will search for a prime number matching the criteria given
- * by the Ethash so the execution time is not constant. It takes ~ 0.01 ms.
+ * by the Ethashprime so the execution time is not constant. It takes ~ 0.01 ms.
  *
  * @param epoch_number  The epoch number.
  * @return              The number items in the light cache.
@@ -118,7 +118,7 @@ uint32_t calculate_light_cache_num_items(uint32_t epoch_number) noexcept;
  * Calculates the number of items in the full dataset for given epoch.
  *
  * This function will search for a prime number matching the criteria given
- * by the Ethash so the execution time is not constant. It takes ~ 0.05 ms.
+ * by the Ethashprime so the execution time is not constant. It takes ~ 0.05 ms.
  *
  * @param epoch_number  The epoch number.
  * @return              The number items in the full dataset.
@@ -150,7 +150,7 @@ std::optional<uint32_t> calculate_epoch_from_seed(const hash256& seed) noexcept;
 uint32_t calculate_epoch_from_block_num(const uint64_t block_num) noexcept;
 
 /**
- * Performs a full ethash round with given nonce
+ * Performs a full ethashprime round with given nonce
  * @param context       The DAG epoch context.
  * @param header        The header hash of the block to be hashed
  *
@@ -173,7 +173,7 @@ bool verify_light(
     const hash256& header_hash, const hash256& mix_hash, uint64_t nonce, const hash256& boundary) noexcept;
 
 /**
- * Verifies the whole ethash outcome validating mix_hash and final_hash againts
+ * Verifies the whole ethashprime outcome validating mix_hash and final_hash againts
  * the boundary. It does traverse the memory hard part
  * @param header_hash
  * @param mix_hash
@@ -185,7 +185,7 @@ VerificationResult verify_full(const epoch_context& context, const hash256& head
     uint64_t nonce, const hash256& boundary) noexcept;
 
 /**
- * Verifies the whole ethash outcome validating mix_hash and final_hash againts
+ * Verifies the whole ethashprime outcome validating mix_hash and final_hash againts
  * the boundary. It does traverse the memory hard part
  * @param header_hash
  * @param mix_hash
@@ -209,7 +209,7 @@ hash256 get_boundary_from_diff(const intx::uint256 difficulty) noexcept;
 
 hash256 from_bytes(const uint8_t* data);
 
-}  // namespace ethash
+}  // namespace ethashprime
 
 
-#endif  // !CRYPTO_ETHASH_HPP_
+#endif  // !CRYPTO_ETHASHPRIME_HPP_

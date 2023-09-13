@@ -153,7 +153,7 @@ void PoolManager::setClientHandlers()
 
         if (!wp.epoch.has_value())
         {
-            wp.epoch.emplace(static_cast<uint32_t>(wp.block.value() / ethash::kEpoch_length));
+            wp.epoch.emplace(static_cast<uint32_t>(wp.block.value() / ethashprime::kEpoch_length));
         }
 
         bool newEpoch{false};  // Whether or not the epoch has changed
@@ -457,7 +457,7 @@ void PoolManager::showMiningAt()
         return;
     }
 
-    double d = dev::getHashesToTarget(m_currentWp.get_boundary().hex(HexPrefix::Add));
+    double d = dev::gethashprimeesToTarget(m_currentWp.get_boundary().hex(HexPrefix::Add));
     cnote << "Epoch : " EthWhite << m_currentWp.epoch.value() << EthReset << " Difficulty : " EthWhite
           << dev::getFormattedHashes(d) << EthReset;
 }
@@ -507,7 +507,7 @@ double PoolManager::getCurrentDifficulty()
     if (!m_currentWp)
         return 0.0;
 
-    return dev::getHashesToTarget(m_currentWp.boundary.hex(HexPrefix::Add));
+    return dev::gethashprimeesToTarget(m_currentWp.boundary.hex(HexPrefix::Add));
 }
 
 unsigned PoolManager::getConnectionSwitches()

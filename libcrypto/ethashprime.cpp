@@ -1,4 +1,4 @@
-// ethash: C/C++ implementation of Ethash, the Ethereum Proof of Work algorithm.
+// ethashprime: C/C++ implementation of Ethashprime, the Ethereum Proof of Work algorithm.
 // Copyright 2018-2019 Pawel Bylica.
 // Licensed under the Apache License, Version 2.0.
 
@@ -7,9 +7,9 @@
 #include <mutex>
 
 #include "bitwise.hpp"
-#include "ethash.hpp"
+#include "ethashprime.hpp"
 
-namespace ethash
+namespace ethashprime
 {
 namespace detail
 {
@@ -497,4 +497,4 @@ hash256 from_bytes(const uint8_t* data)
     return ret;
 }
 
-}  // namespace ethash
+}  // namespace ethashprime

@@ -145,7 +145,7 @@ std::string dev::getTargetFromDiff(double diff, HexPrefix _prefix)
     return target;
 }
 
-double dev::getHashesToTarget(string _target)
+double dev::gethashprimeesToTarget(string _target)
 {
     using namespace boost::multiprecision;
     using BigInteger = boost::multiprecision::cpp_int;

@@ -15,7 +15,7 @@ where `scheme` can be any of:
 * `stratum2+tcp` for plain stratum NiceHash compatible mode
 
 ## A note about this form of notation
-This notation is called URI notation and gives us great flexibility allowing evrprogpowminer to specify all needed arguments per single connection (other miners offer single dedicated CLI arguments which are valid for all connections).
+This notation is called URI notation and gives us great flexibility allowing meowpowminer to specify all needed arguments per single connection (other miners offer single dedicated CLI arguments which are valid for all connections).
 An URI is formed like this
 
 ```
@@ -65,7 +65,7 @@ The above samples produce the very same result.
 
 ## Secure socket comunications for stratum only
 
-evrprogpowminer supports secure socket communications (where pool implements and offers it) to avoid the risk of a [man-in-the-middle attack](https://en.wikipedia.org/wiki/Man-in-the-middle_attack)
+meowpowminer supports secure socket communications (where pool implements and offers it) to avoid the risk of a [man-in-the-middle attack](https://en.wikipedia.org/wiki/Man-in-the-middle_attack)
 To enable it simply replace tcp with either:
 
 * `tls` to enable secure socket communication
@@ -91,11 +91,11 @@ Some examples:
 ## Only for version 0.16+ (older versions not affected)
 
 Stratum autodetection has been introduced to mitigate user's duty to guess/find which stratum flavour to apply (stratum or stratum1 or stratum2).
-If you want to let evrprogpowminer do the tests for you simply enter scheme as `stratum://` (note `+tcp` is missing) or `stratums://` for secure socket or `stratumss://` for secure socket **allowing only TLS 1.2** encryption.
+If you want to let meowpowminer do the tests for you simply enter scheme as `stratum://` (note `+tcp` is missing) or `stratums://` for secure socket or `stratumss://` for secure socket **allowing only TLS 1.2** encryption.
 
 ## Common samples
 
-Here you can find a collection of samples to connect to most commonly used ethash pools. (alphabetic order).
+Here you can find a collection of samples to connect to most commonly used ethashprime pools. (alphabetic order).
 
 * Stratum connection is **always to be preferred** over **getwork** when pool offers it due to its better network latency.
 * If possible the samples use a protocol which supports reporting of hashrate (`--report-hashrate`) if pool supports this.
@@ -219,9 +219,9 @@ SSL connection:
 ### miningpoolhub.com
 
 ```
--P stratum2+tcp://USERNAME%2eWORKERNAME:WORKERPWD@asia.ethash-hub.miningpoolhub.com:20535
--P stratum2+tcp://USERNAME%2eWORKERNAME:WORKERPWD@europe.ethash-hub.miningpoolhub.com:20535
--P stratum2+tcp://USERNAME%2eWORKERNAME:WORKERPWD@us-east.ethash-hub.miningpoolhub.com:20535
+-P stratum2+tcp://USERNAME%2eWORKERNAME:WORKERPWD@asia.ethashprime-hub.miningpoolhub.com:20535
+-P stratum2+tcp://USERNAME%2eWORKERNAME:WORKERPWD@europe.ethashprime-hub.miningpoolhub.com:20535
+-P stratum2+tcp://USERNAME%2eWORKERNAME:WORKERPWD@us-east.ethashprime-hub.miningpoolhub.com:20535
 ```
 
 HINTS:

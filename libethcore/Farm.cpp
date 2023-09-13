@@ -18,19 +18,19 @@
 
 #include <libethcore/Farm.h>
 
-#if ETH_ETHASHCL
-#include <libethash-cl/CLMiner.h>
+#if ETH_ETHASHPRIMECL
+#include <libethashprime-cl/CLMiner.h>
 #endif
 
-#if ETH_ETHASHCUDA
-#include <libethash-cuda/CUDAMiner.h>
+#if ETH_ETHASHPRIMECUDA
+#include <libethashprime-cuda/CUDAMiner.h>
 #endif
 
-#if ETH_ETHASHCPU
-#include <libethash-cpu/CPUMiner.h>
+#if ETH_ETHASHPRIMECPU
+#include <libethashprime-cpu/CPUMiner.h>
 #endif
 
-#include <libcrypto/progpow.hpp>
+#include <libcrypto/progpowprime.hpp>
 
 namespace dev
 {
@@ -201,7 +201,7 @@ void Farm::setWork(WorkPackage const& _newWp)
     if (!m_currentEc || m_currentEc->epoch_number != _newWp.epoch.value())
     {
         m_currentEc.reset();
-        m_currentEc = ethash::get_epoch_context(_newWp.epoch.value(), false);
+        m_currentEc = ethashprime::get_epoch_context(_newWp.epoch.value(), false);
         for (auto const& miner : m_miners)
             miner->setEpoch(m_currentEc);
     }
@@ -249,14 +249,14 @@ bool Farm::start()
         for (auto it = m_DevicesCollection.begin(); it != m_DevicesCollection.end(); it++)
         {
             TelemetryAccountType minerTelemetry;
-#if ETH_ETHASHCUDA
+#if ETH_ETHASHPRIMECUDA
             if (it->second.subscriptionType == DeviceSubscriptionTypeEnum::Cuda)
             {
                 minerTelemetry.prefix = "cu";
                 m_miners.push_back(std::shared_ptr<Miner>(new CUDAMiner(m_miners.size(), m_CUSettings, it->second)));
             }
 #endif
-#if ETH_ETHASHCL
+#if ETH_ETHASHPRIMECL
 
             if (it->second.subscriptionType == DeviceSubscriptionTypeEnum::OpenCL)
             {
@@ -264,7 +264,7 @@ bool Farm::start()
                 m_miners.push_back(std::shared_ptr<Miner>(new CLMiner(m_miners.size(), m_CLSettings, it->second)));
             }
 #endif
-#if ETH_ETHASHCPU
+#if ETH_ETHASHPRIMECPU
 
             if (it->second.subscriptionType == DeviceSubscriptionTypeEnum::Cpu)
             {
@@ -477,16 +477,16 @@ void Farm::submitProofAsync(Solution const& _s)
     {
         bool validSolution{false};
 
-        if (_s.work.algo == "ethash")
+        if (_s.work.algo == "ethashprime")
         {
-            auto result = ethash::verify_full(*m_currentEc.get(), ethash::from_bytes(_s.work.header.data()),
-                ethash::from_bytes(_s.mixHash.data()), _s.nonce, ethash::from_bytes(_s.work.get_boundary().data()));
+            auto result = ethashprime::verify_full(*m_currentEc.get(), ethashprime::from_bytes(_s.work.header.data()),
+                ethashprime::from_bytes(_s.mixHash.data()), _s.nonce, ethashprime::from_bytes(_s.work.get_boundary().data()));
             switch (result)
             {
-            case ethash::VerificationResult::kInvalidNonce:
+            case ethashprime::VerificationResult::kInvalidNonce:
                 cwarn << "Solution not below boundary";
                 break;
-            case ethash::VerificationResult::kInvalidMixHash:
+            case ethashprime::VerificationResult::kInvalidMixHash:
                 cwarn << "Solution mix mismatch";
                 break;
             default:
@@ -495,21 +495,21 @@ void Farm::submitProofAsync(Solution const& _s)
             }
         }
 
-        if (_s.work.algo == "progpow")
+        if (_s.work.algo == "progpowprime")
         {
-            auto period{_s.work.block.value() / progpow::kPeriodLength};
+            auto period{_s.work.block.value() / progpowprime::kPeriodLength};
 
-            ethash::hash256 header_256{ethash::from_bytes(_s.work.header.data())};
-            ethash::hash256 mix_256{ethash::from_bytes(_s.mixHash.data())};
-            ethash::hash256 boundary_256{ethash::from_bytes(_s.work.get_boundary().data())};
+            ethashprime::hash256 header_256{ethashprime::from_bytes(_s.work.header.data())};
+            ethashprime::hash256 mix_256{ethashprime::from_bytes(_s.mixHash.data())};
+            ethashprime::hash256 boundary_256{ethashprime::from_bytes(_s.work.get_boundary().data())};
 
-            auto result = progpow::verify_full(_s.work.block.value(), header_256, mix_256, _s.nonce, boundary_256);
+            auto result = progpowprime::verify_full(_s.work.block.value(), header_256, mix_256, _s.nonce, boundary_256);
             switch (result)
             {
-            case ethash::VerificationResult::kInvalidNonce:
+            case ethashprime::VerificationResult::kInvalidNonce:
                 cwarn << "Solution not below boundary";
                 break;
-            case ethash::VerificationResult::kInvalidMixHash:
+            case ethashprime::VerificationResult::kInvalidMixHash:
                 cwarn << "Solution mix mismatch";
                 break;
             default:

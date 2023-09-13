@@ -15,7 +15,7 @@
 #pragma OPENCL EXTENSION cl_clang_storage_class_specifiers : enable
 #endif
 
-#define HASHES_PER_GROUP (GROUP_SIZE / PROGPOW_LANES)
+#define HASHES_PER_GROUP (GROUP_SIZE / PROGPOWPRIME_LANES)
 
 #define FNV_PRIME 0x01000193
 #define FNV_OFFSET_BASIS 0x811c9dc5
@@ -32,19 +32,19 @@ __constant const uint32_t keccakf_rndc[24] = {0x00000001, 0x00008082, 0x0000808a
     0x80008081, 0x00008009, 0x0000008a, 0x00000088, 0x80008009, 0x8000000a, 0x8000808b, 0x0000008b, 0x00008089,
     0x00008003, 0x00008002, 0x00000080, 0x0000800a, 0x8000000a, 0x80008081, 0x00008080, 0x80000001, 0x80008008};
 
-__constant const uint32_t evrmore_rndc[15] = {
-        0x00000045, //E
-        0x00000056, //V
-        0x00000052, //R
+__constant const uint32_t meowcoin_rndc[15] = {
         0x0000004D, //M
-        0x0000004F, //O
-        0x00000052, //R
         0x00000045, //E
-        0x0000002D, //-
-        0x00000050, //P
-        0x00000052, //R
         0x0000004F, //O
-        0x00000047, //G
+        0x00000057, //W
+        0x00000043, //C
+        0x0000004F, //O
+        0x00000049, //I
+        0x0000004E, //N
+        0x0000004D, //M
+        0x00000045, //E
+        0x0000004F, //O
+        0x00000057, //W
         0x00000050, //P
         0x0000004F, //O
         0x00000057, //W
@@ -138,14 +138,14 @@ void fill_mix(local uint32_t* seed, uint32_t lane_id, uint32_t* mix)
     st.jsr = fnv1a(fnv_hash, lane_id);
     st.jcong = fnv1a(fnv_hash, lane_id);
 #pragma unroll
-    for (int i = 0; i < PROGPOW_REGS; i++)
+    for (int i = 0; i < PROGPOWPRIME_REGS; i++)
         mix[i] = kiss99(&st);
 }
 
 typedef struct
 {
-    uint32_t uint32s[PROGPOW_LANES];
-    uint64_t uint64s[PROGPOW_LANES / 2];
+    uint32_t uint32s[PROGPOWPRIME_LANES];
+    uint64_t uint64s[PROGPOWPRIME_LANES / 2];
 } shuffle_t;
 
 // NOTE: This struct must match the one defined in CLMiner.cpp
@@ -167,27 +167,27 @@ struct SearchResults
 __attribute__((reqd_work_group_size(GROUP_SIZE, 1, 1)))
 #endif
 __kernel void
-ethash_search(__global struct SearchResults* restrict g_output, __constant hash32_t const* g_header,
+ethashprime_search(__global struct SearchResults* restrict g_output, __constant hash32_t const* g_header,
     __global dag_t const* g_dag, ulong start_nonce, ulong target, uint hack_false)
 {
     if (g_output->abort)
         return;
 
     __local shuffle_t share[HASHES_PER_GROUP];
-    __local uint32_t c_dag[PROGPOW_CACHE_WORDS];
+    __local uint32_t c_dag[PROGPOWPRIME_CACHE_WORDS];
 
     uint32_t const lid = get_local_id(0);
     uint32_t const gid = get_global_id(0);
     uint64_t const nonce = start_nonce + gid;
 
-    const uint32_t lane_id = lid & (PROGPOW_LANES - 1);
-    const uint32_t group_id = lid / PROGPOW_LANES;
+    const uint32_t lane_id = lid & (PROGPOWPRIME_LANES - 1);
+    const uint32_t group_id = lid / PROGPOWPRIME_LANES;
 
     // Load the first portion of the DAG into the cache
-    for (uint32_t word = lid * PROGPOW_DAG_LOADS; word < PROGPOW_CACHE_WORDS; word += GROUP_SIZE * PROGPOW_DAG_LOADS)
+    for (uint32_t word = lid * PROGPOWPRIME_DAG_LOADS; word < PROGPOWPRIME_CACHE_WORDS; word += GROUP_SIZE * PROGPOWPRIME_DAG_LOADS)
     {
-        dag_t load = g_dag[word / PROGPOW_DAG_LOADS];
-        for (int i = 0; i < PROGPOW_DAG_LOADS; i++)
+        dag_t load = g_dag[word / PROGPOWPRIME_DAG_LOADS];
+        for (int i = 0; i < PROGPOWPRIME_DAG_LOADS; i++)
             c_dag[word + i] = load.s[i];
     }
 
@@ -215,9 +215,9 @@ ethash_search(__global struct SearchResults* restrict g_output, __constant hash3
         state[9] = nonce >> 32;
 //        state[10] = 0x00000001;
 //        state[18] = 0x80008081;
-        // 3rd apply evrmore input constraints
+        // 3rd apply meowcoin input constraints
         for (int i = 10; i < 25; i++)
-            state[i] = evrmore_rndc[i-10];
+            state[i] = meowcoin_rndc[i-10];
 
         // Run intial keccak round
         keccak_f800(state);
@@ -227,9 +227,9 @@ ethash_search(__global struct SearchResults* restrict g_output, __constant hash3
     }
 
 #pragma unroll 1
-    for (uint32_t h = 0; h < PROGPOW_LANES; h++)
+    for (uint32_t h = 0; h < PROGPOWPRIME_LANES; h++)
     {
-        uint32_t mix[PROGPOW_REGS];
+        uint32_t mix[PROGPOWPRIME_REGS];
 
         // share the hash's seed across all lanes
         if (lane_id == h)
@@ -244,13 +244,13 @@ ethash_search(__global struct SearchResults* restrict g_output, __constant hash3
         fill_mix(share[group_id].uint32s, lane_id, mix);
 
 #pragma unroll 1
-        for (uint32_t l = 0; l < PROGPOW_CNT_DAG; l++)
-            progPowLoop(l, mix, g_dag, c_dag, share[0].uint64s, hack_false);
+        for (uint32_t l = 0; l < PROGPOWPRIME_CNT_DAG; l++)
+            progpowprimeLoop(l, mix, g_dag, c_dag, share[0].uint64s, hack_false);
 
         // Reduce mix data to a per-lane 32-bit digest
         uint32_t mix_hash = FNV_OFFSET_BASIS;
 #pragma unroll
-        for (int i = 0; i < PROGPOW_REGS; i++)
+        for (int i = 0; i < PROGPOWPRIME_REGS; i++)
             fnv1a(mix_hash, mix[i]);
 
         // Reduce all lanes to a single 256-bit digest
@@ -260,7 +260,7 @@ ethash_search(__global struct SearchResults* restrict g_output, __constant hash3
         share[group_id].uint32s[lane_id] = mix_hash;
         barrier(CLK_LOCAL_MEM_FENCE);
 #pragma unroll
-        for (int i = 0; i < PROGPOW_LANES; i++)
+        for (int i = 0; i < PROGPOWPRIME_LANES; i++)
             fnv1a(digest_temp.uint32s[i % 8], share[group_id].uint32s[i]);
         if (h == lane_id)
             digest = digest_temp;
@@ -283,9 +283,9 @@ ethash_search(__global struct SearchResults* restrict g_output, __constant hash3
 
 //        state[17] = 0x00000001;
 //        state[24] = 0x80008081;
-        // 3rd apply evrmore input constraints
+        // 3rd apply meowcoin input constraints
         for (int i = 16; i < 25; i++)
-            state[i] = evrmore_rndc[i - 16];
+            state[i] = meowcoin_rndc[i - 16];
 
         // Run keccak loop
         keccak_f800(state);
@@ -317,7 +317,7 @@ ethash_search(__global struct SearchResults* restrict g_output, __constant hash3
 // DAG calculation logic
 //
 
-#define ETHASH_DATASET_PARENTS 512
+#define ETHASHPRIME_DATASET_PARENTS 512
 #define NODE_WORDS (64 / 4)
 
 __constant uint2 const Keccak_f1600_RC[24] = {
@@ -564,11 +564,11 @@ static void SHA3_512(uint2* s, uint isolate)
     keccak_f1600_no_absorb(s, 8, isolate);
 }
 
-__kernel void ethash_calculate_dag_item(
+__kernel void ethashprime_calculate_dag_item(
     uint start, __global hash64_t const* g_light, __global hash64_t* g_dag, uint isolate)
 {
     uint const node_index = start + get_global_id(0);
-    if (node_index * sizeof(hash64_t) >= PROGPOW_DAG_BYTES)
+    if (node_index * sizeof(hash64_t) >= PROGPOWPRIME_DAG_BYTES)
         return;
 
     hash200_t dag_node;
@@ -576,7 +576,7 @@ __kernel void ethash_calculate_dag_item(
     dag_node.words[0] ^= node_index;
     SHA3_512(dag_node.uint2s, isolate);
 
-    for (uint i = 0; i != ETHASH_DATASET_PARENTS; ++i)
+    for (uint i = 0; i != ETHASHPRIME_DATASET_PARENTS; ++i)
     {
         uint parent_index = fnv(node_index ^ i, dag_node.words[i % NODE_WORDS]) % LIGHT_WORDS;
 

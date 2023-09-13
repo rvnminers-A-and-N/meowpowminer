@@ -6,7 +6,7 @@
 #include <libethcore/Farm.h>
 #include <libethcore/Miner.h>
 
-#include <libcrypto/progpow.hpp>
+#include <libcrypto/progpowprime.hpp>
 
 #include "../PoolClient.h"
 

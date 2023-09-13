@@ -1,6 +1,6 @@
 # A custom command and target to turn the OpenCL kernel into a byte array header
 # The normal build depends on it properly and if the kernel file is changed, then
-# a rebuild of libethash-cl should be triggered
+# a rebuild of libethashprime-cl should be triggered
 
 add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/CLMiner_kernel.h
@@ -30,7 +30,7 @@ endif()
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(..)
 
-add_library(ethash-cl ${SOURCES})
-target_link_libraries(ethash-cl PUBLIC ethcore crypto)
-target_link_libraries(ethash-cl PRIVATE OpenCL::OpenCL)
-target_link_libraries(ethash-cl PRIVATE Boost::filesystem Boost::thread)
+add_library(ethashprime-cl ${SOURCES})
+target_link_libraries(ethashprime-cl PUBLIC ethcore crypto)
+target_link_libraries(ethashprime-cl PRIVATE OpenCL::OpenCL)
+target_link_libraries(ethashprime-cl PRIVATE Boost::filesystem Boost::thread)

@@ -256,7 +256,7 @@ private:
     void collectData(const boost::system::error_code& ec);
 
     /**
-     * @brief Spawn a file - must be located in the directory of evrprogpowminer binary
+     * @brief Spawn a file - must be located in the directory of meowpowminer binary
      * @return false if file was not found or it is not executeable
      */
     bool spawn_file_in_bin_dir(const char* filename, const std::vector<std::string>& args);
@@ -265,7 +265,7 @@ private:
     std::vector<std::shared_ptr<Miner>> m_miners;  // Collection of miners
 
     WorkPackage m_currentWp;
-    std::shared_ptr<ethash::epoch_context> m_currentEc;
+    std::shared_ptr<ethashprime::epoch_context> m_currentEc;
 
     std::atomic<bool> m_isMining = {false};
 

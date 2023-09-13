@@ -63,7 +63,7 @@ void set_header(hash32_t _header);
 
 void set_target(uint64_t _target);
 
-void ethash_generate_dag(
+void ethashprime_generate_dag(
 	hash64_t* dag,
 	uint64_t dag_bytes,
 	hash64_t * light,

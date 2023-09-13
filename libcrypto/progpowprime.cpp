@@ -1,13 +1,13 @@
-// progpow: C/C++ implementation of ProgPow.
+// progpowprime: C/C++ implementation of Progpowprime.
 // Copyright 2018-2019 Pawel Bylica.
 // Licensed under the Apache License, Version 2.0.
 
 // Modified by Firominer's authors 2021
 
-#include "progpow.hpp"
+#include "progpowprime.hpp"
 #include "bitwise.hpp"
 
-namespace progpow
+namespace progpowprime
 {
 mix_rng_state::mix_rng_state(uint64_t seed) noexcept
 {
@@ -183,35 +183,35 @@ std::string getKern(uint64_t prog_seed, kernel_type kern)
         ret << "\n";
     }
 
-    ret << "#define PROGPOW_LANES           " << kLanes << "\n";
-    ret << "#define PROGPOW_REGS            " << kRegs << "\n";
-    ret << "#define PROGPOW_DAG_LOADS       " << kDag_loads << "\n";
-    ret << "#define PROGPOW_CACHE_WORDS     " << kCache_bytes / sizeof(uint32_t) << "\n";
-    ret << "#define PROGPOW_CNT_DAG         " << kDag_count << "\n";
-    ret << "#define PROGPOW_CNT_MATH        " << kMath_count << "\n";
+    ret << "#define PROGPOWPRIME_LANES           " << kLanes << "\n";
+    ret << "#define PROGPOWPRIME_REGS            " << kRegs << "\n";
+    ret << "#define PROGPOWPRIME_DAG_LOADS       " << kDag_loads << "\n";
+    ret << "#define PROGPOWPRIME_CACHE_WORDS     " << kCache_bytes / sizeof(uint32_t) << "\n";
+    ret << "#define PROGPOWPRIME_CNT_DAG         " << kDag_count << "\n";
+    ret << "#define PROGPOWPRIME_CNT_MATH        " << kMath_count << "\n";
     ret << "\n";
 
     if (kern == kernel_type::Cuda)
     {
-        ret << "typedef struct __align__(16) {uint32_t s[PROGPOW_DAG_LOADS];} dag_t;\n";
+        ret << "typedef struct __align__(16) {uint32_t s[PROGPOWPRIME_DAG_LOADS];} dag_t;\n";
         ret << "\n";
         ret << "// Inner loop for prog_seed " << prog_seed << "\n";
-        ret << "__device__ __forceinline__ void progPowLoop(const uint32_t loop,\n";
-        ret << "        uint32_t mix[PROGPOW_REGS],\n";
+        ret << "__device__ __forceinline__ void progpowprimeLoop(const uint32_t loop,\n";
+        ret << "        uint32_t mix[PROGPOWPRIME_REGS],\n";
         ret << "        const dag_t *g_dag,\n";
-        ret << "        const uint32_t c_dag[PROGPOW_CACHE_WORDS],\n";
+        ret << "        const uint32_t c_dag[PROGPOWPRIME_CACHE_WORDS],\n";
         ret << "        const bool hack_false)\n";
     }
     else
     {
-        ret << "typedef struct __attribute__ ((aligned (16))) {uint32_t s[PROGPOW_DAG_LOADS];} "
+        ret << "typedef struct __attribute__ ((aligned (16))) {uint32_t s[PROGPOWPRIME_DAG_LOADS];} "
                "dag_t;\n";
         ret << "\n";
         ret << "// Inner loop for prog_seed " << prog_seed << "\n";
-        ret << "inline void progPowLoop(const uint32_t loop,\n";
-        ret << "        volatile uint32_t mix_arg[PROGPOW_REGS],\n";
+        ret << "inline void progpowprimeLoop(const uint32_t loop,\n";
+        ret << "        volatile uint32_t mix_arg[PROGPOWPRIME_REGS],\n";
         ret << "        __global const dag_t *g_dag,\n";
-        ret << "        __local const uint32_t c_dag[PROGPOW_CACHE_WORDS],\n";
+        ret << "        __local const uint32_t c_dag[PROGPOWPRIME_CACHE_WORDS],\n";
         ret << "        __local uint64_t share[GROUP_SHARE],\n";
         ret << "        const bool hack_false)\n";
     }
@@ -223,17 +223,17 @@ std::string getKern(uint64_t prog_seed, kernel_type kern)
     // See https://github.com/gangnamtestnet
     if (kern == kernel_type::OpenCL)
     {
-        ret << "uint32_t mix[PROGPOW_REGS];\n";
-        ret << "for(int i=0; i<PROGPOW_REGS; i++)\n";
+        ret << "uint32_t mix[PROGPOWPRIME_REGS];\n";
+        ret << "for(int i=0; i<PROGPOWPRIME_REGS; i++)\n";
         ret << "    mix[i] = mix_arg[i];\n";
     }
 
     if (kern == kernel_type::Cuda)
-        ret << "const uint32_t lane_id = threadIdx.x & (PROGPOW_LANES-1);\n";
+        ret << "const uint32_t lane_id = threadIdx.x & (PROGPOWPRIME_LANES-1);\n";
     else
     {
-        ret << "const uint32_t lane_id = get_local_id(0) & (PROGPOW_LANES-1);\n";
-        ret << "const uint32_t group_id = get_local_id(0) / PROGPOW_LANES;\n";
+        ret << "const uint32_t lane_id = get_local_id(0) & (PROGPOWPRIME_LANES-1);\n";
+        ret << "const uint32_t group_id = get_local_id(0) / PROGPOWPRIME_LANES;\n";
     }
 
     // Global memory access
@@ -242,16 +242,16 @@ std::string getKern(uint64_t prog_seed, kernel_type kern)
     // load
     ret << "// global load\n";
     if (kern == kernel_type::Cuda)
-        ret << "offset = SHFL(mix[0], loop%PROGPOW_LANES, PROGPOW_LANES);\n";
+        ret << "offset = SHFL(mix[0], loop%PROGPOWPRIME_LANES, PROGPOWPRIME_LANES);\n";
     else
     {
-        ret << "if(lane_id == (loop % PROGPOW_LANES))\n";
+        ret << "if(lane_id == (loop % PROGPOWPRIME_LANES))\n";
         ret << "    share[group_id] = mix[0];\n";
         ret << "barrier(CLK_LOCAL_MEM_FENCE);\n";
         ret << "offset = share[group_id];\n";
     }
-    ret << "offset %= PROGPOW_DAG_ELEMENTS;\n";
-    ret << "offset = offset * PROGPOW_LANES + (lane_id ^ loop) % PROGPOW_LANES;\n";
+    ret << "offset %= PROGPOWPRIME_DAG_ELEMENTS;\n";
+    ret << "offset = offset * PROGPOWPRIME_LANES + (lane_id ^ loop) % PROGPOWPRIME_LANES;\n";
     ret << "data_dag = g_dag[offset];\n";
     ret << "// hack to prevent compiler from reordering LD and usage\n";
     if (kern == kernel_type::Cuda)
@@ -270,7 +270,7 @@ std::string getKern(uint64_t prog_seed, kernel_type kern)
             const auto sel{state.rng()};
 
             ret << "// cache load " << i << "\n";
-            ret << "offset = " << src << " % PROGPOW_CACHE_WORDS;\n";
+            ret << "offset = " << src << " % PROGPOWPRIME_CACHE_WORDS;\n";
             ret << "data = c_dag[offset];\n";
             ret << random_merge_src(dest, "data", sel);
         }
@@ -322,7 +322,7 @@ std::string getKern(uint64_t prog_seed, kernel_type kern)
     // Work around AMD OpenCL compiler bug
     if (kern == kernel_type::OpenCL)
     {
-        ret << "for(int i=0; i<PROGPOW_REGS; i++)\n";
+        ret << "for(int i=0; i<PROGPOWPRIME_REGS; i++)\n";
         ret << "    mix_arg[i] = mix[i];\n";
     }
     ret << "}\n";
@@ -333,14 +333,14 @@ std::string getKern(uint64_t prog_seed, kernel_type kern)
 
 using mix_t = std::array<std::array<uint32_t, kRegs>, kLanes>;
 
-static void round(const ethash::epoch_context& context, uint32_t r, mix_t& mix, mix_rng_state state)
+static void round(const ethashprime::epoch_context& context, uint32_t r, mix_t& mix, mix_rng_state state)
 {
-    static const uint32_t l1_cache_words{ethash::kL1_cache_size / sizeof(uint32_t)};
+    static const uint32_t l1_cache_words{ethashprime::kL1_cache_size / sizeof(uint32_t)};
     const uint32_t num_items{static_cast<uint32_t>(context.full_dataset_num_items / 2)};
     const uint32_t item_index{mix.at(r % kLanes).at(0) % num_items};
 
     // Load DAG Data
-    ethash::hash2048 item{ethash::detail::lazy_lookup_2048(context, item_index)};
+    ethashprime::hash2048 item{ethashprime::detail::lazy_lookup_2048(context, item_index)};
 
     const auto max_operations{std::max(kCache_count, kMath_count)};
 
@@ -355,8 +355,8 @@ static void round(const ethash::epoch_context& context, uint32_t r, mix_t& mix, 
 
             for (uint64_t l{0}; l < kLanes; ++l)
             {
-                const size_t offset = mix.at(l).at(src) % ethash::kL1_cache_words;
-                random_merge(mix.at(l).at(dst), ethash::le::uint32(context.l1_cache[offset]), sel);
+                const size_t offset = mix.at(l).at(src) % ethashprime::kL1_cache_words;
+                random_merge(mix.at(l).at(dst), ethashprime::le::uint32(context.l1_cache[offset]), sel);
             }
         }
         if (i < kMath_count)  // Random math.
@@ -397,7 +397,7 @@ static void round(const ethash::epoch_context& context, uint32_t r, mix_t& mix, 
         const auto offset = ((l ^ r) % kLanes) * kWords_per_lane;
         for (size_t i = 0; i < kWords_per_lane; i++)
         {
-            const auto word = ethash::le::uint32(item.word32s[offset + i]);
+            const auto word = ethashprime::le::uint32(item.word32s[offset + i]);
             random_merge(mix.at(l).at(dsts[i]), word, sels[i]);
         }
     }
@@ -423,51 +423,51 @@ static mix_t init_mix(uint64_t seed)
     return mix;
 }
 
-static const uint32_t evrmore_kawpow[15] = {
-        0x00000045, //E
-        0x00000056, //V
-        0x00000052, //R
+static const uint32_t meowcoin_meowpow[15] = {
         0x0000004D, //M
-        0x0000004F, //O
-        0x00000052, //R
         0x00000045, //E
-        0x0000002D, //-
-        0x00000050, //P
-        0x00000052, //R
         0x0000004F, //O
-        0x00000047, //G
+        0x00000057, //W
+        0x00000043, //C
+        0x0000004F, //O
+        0x00000049, //I
+        0x0000004E, //N
+        0x0000004D, //M
+        0x00000045, //E
+        0x0000004F, //O
+        0x00000057, //W
         0x00000050, //P
         0x0000004F, //O
         0x00000057, //W
 };
 
-ethash::hash256 hash_seed(const ethash::hash256& header_hash, uint64_t nonce) noexcept
+ethashprime::hash256 hash_seed(const ethashprime::hash256& header_hash, uint64_t nonce) noexcept
 {
-    nonce = ethash::le::uint64(nonce);
+    nonce = ethashprime::le::uint64(nonce);
     uint32_t state[25] = {0x0};
     for (size_t i = 0; i < 8; i++)
     {
-        state[i] = ethash::le::uint32(header_hash.word32s[i]);
+        state[i] = ethashprime::le::uint32(header_hash.word32s[i]);
     }
 
     std::memcpy(&state[8], &nonce, sizeof(uint64_t));
 //    state[10] = 0x00000001;
 //    state[18] = 0x80008081;
-      // 3rd apply evrmore input constraints
+      // 3rd apply meowcoin input constraints
       for (int i = 10; i < 25; i++)
-          state[i] = evrmore_kawpow[i-10];
+          state[i] = meowcoin_meowpow[i-10];
 
-    ethash::keccakf800(state);
+    ethashprime::keccakf800(state);
 
-    ethash::hash256 output;
+    ethashprime::hash256 output;
     for (int i = 0; i < 8; ++i)
     {
-        output.word32s[i] = ethash::le::uint32(state[i]);
+        output.word32s[i] = ethashprime::le::uint32(state[i]);
     }
     return output;
 }
 
-ethash::hash256 hash_mix(const ethash::epoch_context& context, const uint32_t period, uint64_t seed)
+ethashprime::hash256 hash_mix(const ethashprime::epoch_context& context, const uint32_t period, uint64_t seed)
 {
     auto mix{init_mix(seed)};
     mix_rng_state state(period);
@@ -489,8 +489,8 @@ ethash::hash256 hash_mix(const ethash::epoch_context& context, const uint32_t pe
     }
 
     // Reduce all lanes to a single 256-bit result.
-    static const size_t num_words{sizeof(ethash::hash256) / sizeof(uint32_t)};
-    ethash::hash256 mix_hash{};
+    static const size_t num_words{sizeof(ethashprime::hash256) / sizeof(uint32_t)};
+    ethashprime::hash256 mix_hash{};
     for (auto& w : mix_hash.word32s)
     {
         w = crypto::kFNV_OFFSET_BASIS;
@@ -504,63 +504,63 @@ ethash::hash256 hash_mix(const ethash::epoch_context& context, const uint32_t pe
 #if __BYTE_ORDER != __LITTLE_ENDIAN
     for (auto& w : mix_hash.word32s)
     {
-        w = ethash::le::uint32(w);
+        w = ethashprime::le::uint32(w);
     }
 #endif
 
     return mix_hash;
 }
 
-ethash::hash256 hash_final(const ethash::hash256& input_hash, const ethash::hash256& mix_hash) noexcept
+ethashprime::hash256 hash_final(const ethashprime::hash256& input_hash, const ethashprime::hash256& mix_hash) noexcept
 {
     uint32_t state[25] = {0};
-    std::memcpy(&state[0], input_hash.bytes, sizeof(ethash::hash256));
-    std::memcpy(&state[8], mix_hash.bytes, sizeof(ethash::hash256));
+    std::memcpy(&state[0], input_hash.bytes, sizeof(ethashprime::hash256));
+    std::memcpy(&state[8], mix_hash.bytes, sizeof(ethashprime::hash256));
     //state[17] = 0x00000001;
     //state[24] = 0x80008081;
-    // 3rd apply evrmore input constraints
+    // 3rd apply meowcoin input constraints
     for (int i = 16; i < 25; i++)
-        state[i] = evrmore_kawpow[i - 16];
-    ethash::keccakf800(state);
-    ethash::hash256 output{};
-    std::memcpy(output.bytes, &state[0], sizeof(ethash::hash256));
+        state[i] = meowcoin_meowpow[i - 16];
+    ethashprime::keccakf800(state);
+    ethashprime::hash256 output{};
+    std::memcpy(output.bytes, &state[0], sizeof(ethashprime::hash256));
     return output;
 }
 
-ethash::result hash(
-    const ethash::epoch_context& context, const uint32_t period, const ethash::hash256& header_hash, uint64_t nonce)
+ethashprime::result hash(
+    const ethashprime::epoch_context& context, const uint32_t period, const ethashprime::hash256& header_hash, uint64_t nonce)
 {
-    const ethash::hash256 seed_hash{progpow::hash_seed(header_hash, nonce)};
+    const ethashprime::hash256 seed_hash{progpowprime::hash_seed(header_hash, nonce)};
     const uint64_t seed_64{seed_hash.word64s[0]};
-    const ethash::hash256 mix_hash{progpow::hash_mix(context, period, seed_64)};
-    const ethash::hash256 final_hash{progpow::hash_final(seed_hash, mix_hash)};
+    const ethashprime::hash256 mix_hash{progpowprime::hash_mix(context, period, seed_64)};
+    const ethashprime::hash256 final_hash{progpowprime::hash_final(seed_hash, mix_hash)};
     return {final_hash, mix_hash};
 }
 
-ethash::VerificationResult verify_full(const ethash::epoch_context& context, const uint32_t period,
-    const ethash::hash256& header_hash, const ethash::hash256& mix_hash, uint64_t nonce,
-    const ethash::hash256& boundary) noexcept
+ethashprime::VerificationResult verify_full(const ethashprime::epoch_context& context, const uint32_t period,
+    const ethashprime::hash256& header_hash, const ethashprime::hash256& mix_hash, uint64_t nonce,
+    const ethashprime::hash256& boundary) noexcept
 {
-    auto result{progpow::hash(context, period, header_hash, nonce)};
-    if (!ethash::is_less_or_equal(result.final_hash, boundary))
+    auto result{progpowprime::hash(context, period, header_hash, nonce)};
+    if (!ethashprime::is_less_or_equal(result.final_hash, boundary))
     {
-        return ethash::VerificationResult::kInvalidNonce;
+        return ethashprime::VerificationResult::kInvalidNonce;
     }
-    if (!ethash::is_equal(result.mix_hash, mix_hash))
+    if (!ethashprime::is_equal(result.mix_hash, mix_hash))
     {
-        return ethash::VerificationResult::kInvalidMixHash;
+        return ethashprime::VerificationResult::kInvalidMixHash;
     }
-    return ethash::VerificationResult::kOk;
+    return ethashprime::VerificationResult::kOk;
 }
 
-ethash::VerificationResult verify_full(const uint64_t block_number, const ethash::hash256& header_hash,
-    const ethash::hash256& mix_hash, uint64_t nonce, const ethash::hash256& boundary) noexcept
+ethashprime::VerificationResult verify_full(const uint64_t block_number, const ethashprime::hash256& header_hash,
+    const ethashprime::hash256& mix_hash, uint64_t nonce, const ethashprime::hash256& boundary) noexcept
 {
-    auto dag_epoch_number{ethash::calculate_epoch_from_block_num(block_number)};
-    auto dag_epoch_context{ethash::get_epoch_context(dag_epoch_number, false)};
-    auto progpow_period{block_number / progpow::kPeriodLength};
-    return progpow::verify_full(*dag_epoch_context, progpow_period, header_hash, mix_hash, nonce, boundary);
+    auto dag_epoch_number{ethashprime::calculate_epoch_from_block_num(block_number)};
+    auto dag_epoch_context{ethashprime::get_epoch_context(dag_epoch_number, false)};
+    auto progpowprime_period{block_number / progpowprime::kPeriodLength};
+    return progpowprime::verify_full(*dag_epoch_context, progpowprime_period, header_hash, mix_hash, nonce, boundary);
 }
 
 
-}  // namespace progpow
+}  // namespace progpowprime

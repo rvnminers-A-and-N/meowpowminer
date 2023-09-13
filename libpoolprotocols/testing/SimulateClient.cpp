@@ -55,21 +55,21 @@ void SimulateClient::submitSolution(const Solution& solution)
     // This is a fake submission only evaluated locally
     solution_arrived.store(true);
     std::chrono::steady_clock::time_point submit_start = std::chrono::steady_clock::now();
-    ethash::VerificationResult result;
-    if (solution.work.algo == "ethash")
+    ethashprime::VerificationResult result;
+    if (solution.work.algo == "ethashprime")
     {
-        result = ethash::verify_full(solution.work.block.value(), ethash::from_bytes(solution.work.header.data()),
-            ethash::from_bytes(solution.mixHash.data()), solution.nonce,
-            ethash::from_bytes(solution.work.get_boundary().data()));
+        result = ethashprime::verify_full(solution.work.block.value(), ethashprime::from_bytes(solution.work.header.data()),
+            ethashprime::from_bytes(solution.mixHash.data()), solution.nonce,
+            ethashprime::from_bytes(solution.work.get_boundary().data()));
     }
-    else if (solution.work.algo == "progpow")
+    else if (solution.work.algo == "progpowprime")
     {
-        result = progpow::verify_full(solution.work.block.value(), ethash::from_bytes(solution.work.header.data()),
-            ethash::from_bytes(solution.mixHash.data()), solution.nonce,
-            ethash::from_bytes(solution.work.get_boundary().data()));
+        result = progpowprime::verify_full(solution.work.block.value(), ethashprime::from_bytes(solution.work.header.data()),
+            ethashprime::from_bytes(solution.mixHash.data()), solution.nonce,
+            ethashprime::from_bytes(solution.work.get_boundary().data()));
     }
 
-    bool accepted = (result == ethash::VerificationResult::kOk);
+    bool accepted = (result == ethashprime::VerificationResult::kOk);
     std::chrono::milliseconds response_delay_ms =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - submit_start);
 
@@ -95,11 +95,11 @@ void SimulateClient::workLoop()
 
     WorkPackage current;
 
-    current.algo = "progpow";
+    current.algo = "progpowprime";
     current.block.emplace(m_block);
-    current.epoch.emplace(m_block / ethash::kEpoch_length);
+    current.epoch.emplace(m_block / ethashprime::kEpoch_length);
 
-    ethash::hash256 seed_h256{ethash::calculate_seed_from_epoch(current.epoch.value())};
+    ethashprime::hash256 seed_h256{ethashprime::calculate_seed_from_epoch(current.epoch.value())};
     current.seed = h256(reinterpret_cast<::byte*>(seed_h256.bytes), h256::ConstructFromPointer);
 
     current.header = h256::random();
@@ -120,8 +120,8 @@ void SimulateClient::workLoop()
             solution_arrived.store(false);
             ++m_block;
             current.block.emplace(m_block);
-            current.epoch.emplace(m_block / ethash::kEpoch_length);
-            seed_h256 = ethash::calculate_seed_from_epoch(current.epoch.value());
+            current.epoch.emplace(m_block / ethashprime::kEpoch_length);
+            seed_h256 = ethashprime::calculate_seed_from_epoch(current.epoch.value());
             current.seed = h256(reinterpret_cast<::byte*>(seed_h256.bytes), h256::ConstructFromPointer);
             current.header = h256::random();
             m_onWorkReceived(current);  // submit new fake job

@@ -208,7 +208,7 @@ bool setenv(const char name[], const char value[], bool override = false);
 std::string getTargetFromDiff(double diff, HexPrefix _prefix = HexPrefix::Add);
 
 /// Gets the difficulty expressed in hashes to target
-double getHashesToTarget(std::string _target);
+double gethashprimeesToTarget(std::string _target);
 
 /// Generic function to scale a value
 std::string getScaledSize(double _value, double _divisor, int _precision, std::string _sizes[],

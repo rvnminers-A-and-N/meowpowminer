@@ -77,9 +77,9 @@ before_install:
     fi
 script: |
     if [ "$CUDA_VERSION" = "8" ]; then
-      cmake -DCUDA_HOST_COMPILER=/usr/bin/gcc-5 -DHUNTER_JOBS_NUMBER=4 -DETHASHCUDA=$CUDA -DETHASHCL=ON -DAPICORE=ON -H. -Bbuild
+      cmake -DCUDA_HOST_COMPILER=/usr/bin/gcc-5 -DHUNTER_JOBS_NUMBER=4 -DETHASHPRIMECUDA=$CUDA -DETHASHPRIMECL=ON -DAPICORE=ON -H. -Bbuild
     else
-      cmake -DHUNTER_JOBS_NUMBER=4 -DETHASHCUDA=$CUDA -DETHASHCL=ON -DAPICORE=ON -H. -Bbuild
+      cmake -DHUNTER_JOBS_NUMBER=4 -DETHASHPRIMECUDA=$CUDA -DETHASHPRIMECL=ON -DAPICORE=ON -H. -Bbuild
     fi
     cmake --build build --target package -- -j4
     #build/kawpowminer/kawpowminer --help
