@@ -156,7 +156,7 @@ Progpowprime can be tuned using the following parameters.  The proposed settings
 * `PROGPOWPRIME_CNT_CACHE`: The number of cache accesses per loop
 * `PROGPOWPRIME_CNT_MATH`: The number of math operations per loop
 
-The value of these parameters has been tweaked to use 0.9.4 specs with a PROGPOWPRIME_PEROD of 3 to fit Evrmore's blocktimes.  See [this medium post](https://medium.com/@ifdefelse/progpowprime-progress-da5bb31a651b) for details.
+The value of these parameters has been tweaked to use 0.9.5 specs with a PROGPOWPRIME_PEROD of 3 to fit Evrmore's blocktimes.  See [this medium post](https://medium.com/@ifdefelse/progpowprime-progress-da5bb31a651b) for details.
 
 | Parameter             | 0.9.2 | 0.9.3 | 0.9.4 | 0.9.5 |
 |-----------------------|-------|-------|--------|--------|
@@ -164,7 +164,7 @@ The value of these parameters has been tweaked to use 0.9.4 specs with a PROGPOW
 | `PROGPOWPRIME_LANES`       | `16`  | `16`  |  `16`  |  `8`  |
 | `PROGPOWPRIME_REGS`        | `32`  | `32`  |  `32`  |  `16` |
 | `PROGPOWPRIME_DAG_LOADS`   | `4`   | `4`   |  `4`   |  `4`  |
-| `PROGPOWPRIME_CACHE_BYTES` | `16x1024` | `16x1024` | `8x1024` |
+| `PROGPOWPRIME_CACHE_BYTES` | `16x1024` | `16x1024` |  `16x1024`  | `8x1024` |
 | `PROGPOWPRIME_CNT_DAG`     | `64`  | `64`  | `64`  |  `32`  |
 | `PROGPOWPRIME_CNT_CACHE`   | `12`  | `11`  | `11`  |  `6`   |
 | `PROGPOWPRIME_CNT_MATH`    | `20`  | `18`  | `18`  |  `9`   |
