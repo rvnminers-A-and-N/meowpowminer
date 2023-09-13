@@ -156,7 +156,7 @@ Progpowprime can be tuned using the following parameters.  The proposed settings
 * `PROGPOWPRIME_CNT_CACHE`: The number of cache accesses per loop
 * `PROGPOWPRIME_CNT_MATH`: The number of math operations per loop
 
-The value of these parameters has been tweaked to use 0.9.5 specs with a PROGPOWPRIME_PEROD of 3 to fit Evrmore's blocktimes.  See [this medium post](https://medium.com/@ifdefelse/progpowprime-progress-da5bb31a651b) for details.
+The value of these parameters has been tweaked to use 0.9.5 specs with a PROGPOWPRIME_PEROD of 6 to fit Meowcoin's blocktimes.  See [this medium post](https://medium.com/@ifdefelse/progpowprime-progress-da5bb31a651b) for details.
 
 | Parameter             | 0.9.2 | 0.9.3 | 0.9.4 | 0.9.5 |
 |-----------------------|-------|-------|--------|--------|
