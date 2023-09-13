@@ -5,14 +5,14 @@ Meowpowminer is a fork of Ravencoin's [kawpowminer ](https://github.com/RavenCom
 Compared to kawpowminer, meowpowminer has the following differences:
 * Starting DAG size at block #? is 5GigaBytes
 * EPOCH duration is 15000 blocks
-* meowpowminer supports direct solo mining to evrmored/evrmore-qt without needing a stratum proxy
+* meowpowminer supports direct solo mining to meowcoind/meowcoin-qt without needing a stratum proxy
 * the random starting seeds are slightly different for uniqueness
 * improved detection of nVidia GPU memory size
 
 AMD GPU cards are not currently properly supported. We hope to fix that in a future release.
 
-You do not need this software for Evrmore testnet. Testnet uses sha256 cpu mining (use the "setgenerate on" command in your node)
-Meowpowminer is for use only on Evrmore mainnet. 
+You do not need this software for Meowcoin testnet. Testnet uses sha256 cpu mining (use the "setgenerate on" command in your node)
+Meowpowminer is for use only on Meowcoin mainnet. 
 
 ====
 
@@ -22,29 +22,29 @@ A typical use of meowpowminer with a pool might look like:
 A typical use of meowpowminer with a local stratum solo-mining proxy might look like:
     meowpowminer.exe -U -P stratum+tcp://ESDwJs2FX5zYoVnLQ7YuLZhmnsAcpKqMiq.worker@127.0.0.1:3333
 
-A typical use of meowpowminer to solo mine direct to evrmored/evrmore-qt might look like:
-    meowpowminer.exe -U -P http://mynodeusername:mynodepassword@127.0.0.1:9766 (specify miningaddress="youraddress" in evrmore.conf)
+A typical use of meowpowminer to solo mine direct to meowcoind/meowcoin-qt might look like:
+    meowpowminer.exe -U -P http://mynodeusername:mynodepassword@127.0.0.1:9766 (specify miningaddress="youraddress" in meowcoin.conf)
 
 ====
 
 Remember that you need to have CUDA installed on your system in order for meowpowminer to work. Get it from nVidia.
 
-Also, if you are solo mining direct to evrmored or evrmore-qt, before launching meowpowminer, make sure that:
+Also, if you are solo mining direct to meowcoind or meowcoin-qt, before launching meowpowminer, make sure that:
     * the node is fully syncd
     * the node is listening on the RPC port (9766 for mainnet)
-    * the node has miningaddress="youraddress" set in the evrmore.conf file
-    * the node has rpcuser and rpcpassword set in the evrmore.conf file.
+    * the node has miningaddress="youraddress" set in the meowcoin.conf file
+    * the node has rpcuser and rpcpassword set in the meowcoin.conf file.
 
 
 ===============
 
 > meowpowpow miner with OpenCL, CUDA and stratum support
 
-**meowpowminer** is an Progpowprime GPU mining worker: with meowpowminer you can mine Evrmore, which relies on an Progpowprime-based Proof of Work thus including Ethereum Progpowprime and others. This is the actively maintained version of meowpowminer. It originates from the [ethminer](https://github.com/ethereum-mining/ethminer) project. Check the original [Progpowprime](https://github.com/ifdefelse/progpowprime) implementation and [EIP-1057](https://eips.ethereum.org/EIPS/eip-1057) for specification.
+**meowpowminer** is an Progpowprime GPU mining worker: with meowpowminer you can mine Meowcoin, which relies on an Progpowprime-based Proof of Work thus including Ethereum Progpowprime and others. This is the actively maintained version of meowpowminer. It originates from the [ethminer](https://github.com/ethereum-mining/ethminer) project. Check the original [Progpowprime](https://github.com/ifdefelse/progpowprime) implementation and [EIP-1057](https://eips.ethereum.org/EIPS/eip-1057) for specification.
 
 ## Features
 
-* First commercial Progpowprime Evrmore miner software for miners.
+* First commercial Progpowprime Meowcoin miner software for miners.
 * OpenCL mining
 * Nvidia CUDA mining
 * realistic benchmarking against arbitrary epoch/DAG/blocknumber
@@ -220,13 +220,13 @@ The new WDDM 2.x driver on Windows 10 uses a different way of addressing the GPU
 
 ### Why is a GTX 1080 slower than a GTX 1070?
 
-Because of the GDDR5X memory, which can't be fully utilized for Evrmore mining (yet).
+Because of the GDDR5X memory, which can't be fully utilized for Meowcoin mining (yet).
 
 ### Are AMD cards also affected by slowdowns with increasing DAG size?
 
 Only GCN 1.0 GPUs (78x0, 79x0, 270, 280), but in a different way. You'll see that on each new epoch (30K blocks), the hashrate will go down a little bit.
 
-### Can I still mine Evrmore with my 2GB GPU?
+### Can I still mine Meowcoin with my 2GB GPU?
 
 Not really, your VRAM must be above the DAG size (Currently about 3 GB.) to get best performance. Without it severe hash loss will occur.
 
