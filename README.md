@@ -9,7 +9,7 @@ Compared to kawpowminer, meowpowminer has the following differences:
 * the random starting seeds are slightly different for uniqueness
 * improved detection of nVidia GPU memory size
 * ONLY WORKING on Devices that can use Cuda <= 10.X, Will compile with NEW CUDA asap!
-* Navigate here and install the appropriate version of Visual C++ from here: https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170
+* Navigate here and install the appropriate version of Visual C++ Redistributables: https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170
 * Typically one of the three in this section is what you need, machine depending: https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022
 
 AMD GPU cards are not currently properly supported. We hope to fix that in a future release.
