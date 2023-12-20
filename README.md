@@ -8,6 +8,7 @@ Compared to kawpowminer, meowpowminer has the following differences:
 * meowpowminer supports direct solo mining to meowcoind/meowcoin-qt without needing a stratum proxy
 * the random starting seeds are slightly different for uniqueness
 * improved detection of nVidia GPU memory size
+* ONLY WORKING on Devices that can use Cuda <= 10.X, Will compile with NEW CUDA asap!
 
 AMD GPU cards are not currently properly supported. We hope to fix that in a future release.
 
